@@ -2,18 +2,24 @@ import requests
 import sys
 import os
 
-# Get job type from workflow input
+# Get job type from workflow input or default to "flexible"
 job_type = os.environ.get("JOB_TYPE", "flexible").lower()
 
-# If urgent, skip checks and allow job
+# 🚨 If urgent → always run
 if job_type == "urgent":
     print("🚀 Job type = urgent → Skipping carbon intensity check. Running job immediately.")
     sys.exit(0)
 
-# If flexible, check carbon intensity API
+# 🌱 If flexible → check UK Carbon Intensity API
 url = "https://api.carbonintensity.org.uk/intensity"
-resp = requests.get(url).json()
-data = resp["data"][0]
+try:
+    resp = requests.get(url, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()["data"][0]
+except Exception as e:
+    print(f"❌ Failed to fetch carbon intensity data: {e}")
+    # Fail safe: allow job to continue if API unavailable
+    sys.exit(0)
 
 forecast = data["intensity"]["forecast"]
 actual = data["intensity"]["actual"]
