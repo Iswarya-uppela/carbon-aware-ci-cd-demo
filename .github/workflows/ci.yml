@@ -1,6 +1,6 @@
 name: Carbon-Aware CI/CD
 
-# Required for gh-pages deploy (gives write access to repository)
+# Required for gh-pages deploy (gives write access to repo)
 permissions:
   contents: write
 
