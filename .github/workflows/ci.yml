@@ -32,7 +32,7 @@ jobs:
       - name: Carbon Intensity Check
         id: carbon
         env:
-          JOB_TYPE: ${{ github.event.inputs.job_type }}
+          JOB_TYPE: ${{ github.event.inputs.job_type || 'flexible' }}
         run: python carbon_check.py
 
   deploy:
