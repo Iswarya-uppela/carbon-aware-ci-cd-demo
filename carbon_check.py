@@ -1,37 +1,22 @@
 import requests
 import sys
 import os
-from datetime import datetime
 
-# Get job type from workflow input (default flexible if not provided)
+# Detect trigger source
+event = os.environ.get("GITHUB_EVENT_NAME", "push")
 job_type = os.environ.get("JOB_TYPE", "flexible").lower()
 
-# HTML template for index.html
-def write_html(message):
-    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    with open("index.html", "w") as f:
-        f.write(f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Carbon-Aware CI/CD Demo</title>
-</head>
-<body style="font-family: Arial; text-align: center; margin: 50px;">
-  <h1>🌱 Carbon-Aware CI/CD Demo</h1>
-  <p>{message}</p>
-  <p><i>Deployed at {timestamp}</i></p>
-</body>
-</html>""")
+if event == "push":
+    print("📌 Triggered by auto push → Defaulting to 'flexible'")
+else:
+    print(f"📌 Triggered manually → Job type selected: {job_type}")
 
-# If urgent, skip checks and allow job
+# Urgent jobs skip checks
 if job_type == "urgent":
-    msg = "🚀 Job was marked <b>urgent</b> → Skipped carbon intensity check and deployed immediately."
-    print(msg)
-    write_html(msg)
+    print("🚀 Job type = urgent → Skipping carbon intensity check. Running job immediately.")
     sys.exit(0)
 
-# If flexible, check carbon intensity API
+# Flexible jobs check carbon intensity API
 url = "https://api.carbonintensity.org.uk/intensity"
 resp = requests.get(url).json()
 data = resp["data"][0]
@@ -45,19 +30,15 @@ print(f"📊 Actual:   {actual} gCO₂/kWh")
 print(f"🌍 Index:    {index}")
 print(f"⚡ Job type: {job_type}")
 
-# Threshold for green
+# Threshold for "green energy"
 THRESHOLD = 200  
 
 if actual < THRESHOLD:
-    msg = "✅ Pipeline ran during <b>low carbon hours</b>! 🌱 The grid was green, so we deployed this page."
-    print(msg)
-    write_html(msg)
+    print("✅ Carbon intensity is low now → running job")
     sys.exit(0)
 elif forecast < THRESHOLD:
-    msg = "⏳ Forecast shows greener energy soon → Job delayed to reduce emissions."
-    print(msg)
+    print("⏳ Forecast shows lower intensity soon → delaying job")
     sys.exit(1)
 else:
-    msg = "⚠️ High carbon intensity now and in forecast → Job delayed."
-    print(msg)
+    print("⚠️ High carbon intensity now and in forecast → delaying job")
     sys.exit(1)
