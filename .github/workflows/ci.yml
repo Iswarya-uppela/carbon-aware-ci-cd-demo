@@ -1,5 +1,9 @@
 name: Carbon-Aware CI/CD
 
+# 👇 Required for gh-pages deploy (gives write access to repo)
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ "main" ]
@@ -32,8 +36,9 @@ jobs:
       - name: Carbon Intensity Check
         id: carbon
         env:
+          # If workflow_dispatch → use dropdown input
+          # If push → default to "flexible"
           JOB_TYPE: ${{ github.event.inputs.job_type || 'flexible' }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
         run: python carbon_check.py
 
   deploy:
@@ -47,4 +52,4 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish
